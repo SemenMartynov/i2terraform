@@ -8,6 +8,15 @@ provider "aws" {
   region = "eu-north-1" # Stockholm
 }
 
+resource "aws_eip" "webserver_static_ip" {
+  instance = aws_instance.my_webserver.id
+
+  tags = {
+    Name  = "Elastic IP address for the Web Server"
+    Owner = "Semen Martynov"
+  }
+}
+
 resource "aws_instance" "my_webserver" {
   ami                    = "ami-0bb935e4614c12d86" # Amazon Linux 2 Kernel 5.10
   instance_type          = "t3.micro"              # 2vCPU, 1G
@@ -17,6 +26,12 @@ resource "aws_instance" "my_webserver" {
     next_month = "March",
     week_days  = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
   })
+
+  lifecycle {
+    //prevent_destroy = true
+    //ignore_changes = ["ami", "user_data"]
+    create_before_destroy = true
+  }
 
   tags = {
     Name  = "Web Server build by Terraform"
