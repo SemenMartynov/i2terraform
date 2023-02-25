@@ -12,15 +12,7 @@ resource "aws_instance" "my_webserver" {
   ami                    = "ami-0bb935e4614c12d86" # Amazon Linux 2 Kernel 5.10
   instance_type          = "t3.micro"              # 2vCPU, 1G
   vpc_security_group_ids = [aws_security_group.my_webserver.id]
-  user_data              = <<EOF
-#!/bin/bash
-yum -y update
-yum -y install httpd
-myip=`curl http://169.254.169.254/latest/meta-data/local-ipv4`
-echo "<h2>WebServer with IP: $myip</h2><br>Build by Terraform!" > /var/www/html/index.html
-sudo service httpd start
-chkconfig httpd on
-EOF
+  user_data              = file("userdata.sh")
 
   tags = {
     Name  = "Web Server build by Terraform"
