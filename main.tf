@@ -17,8 +17,33 @@ resource "aws_eip" "webserver_static_ip" {
   }
 }
 
+data "aws_ami" "latest_amazon_linux" {
+  most_recent = true
+  owners = [ "amazon" ]
+
+  filter {
+    name = "name"
+    values = ["amzn2-ami-*-gp2"]
+  }
+
+  filter {
+    name = "root-device-type"
+    values = [ "ebs" ]
+  }
+
+  filter {
+    name = "virtualization-type"
+    values = [ "hvm" ]
+  }
+
+  filter {
+    name = "architecture"
+    values = [ "x86_64" ]
+  }
+}
+
 resource "aws_instance" "my_webserver" {
-  ami                    = "ami-0bb935e4614c12d86" # Amazon Linux 2 Kernel 5.10
+  ami                    = data.aws_ami.latest_amazon_linux.id
   instance_type          = "t3.micro"              # 2vCPU, 1G
   vpc_security_group_ids = [aws_security_group.my_webserver.id]
   user_data = templatefile("userdata.sh.tpl", {
