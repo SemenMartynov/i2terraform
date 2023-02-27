@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 
 provider "aws" {
-  region = "eu-north-1" # Stockholm
+  region = var.region
 }
 
 # -------------------------------------------------------------------
@@ -17,7 +17,7 @@ resource "aws_security_group" "webserver" {
   description = "SecurityGroup for the High Avalability WebServers"
 
   dynamic "ingress" {
-    for_each = [80, 443]
+    for_each = var.allow_pors
     content {
       from_port   = ingress.value
       to_port     = ingress.value
@@ -32,10 +32,9 @@ resource "aws_security_group" "webserver" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = {
+  tags = merge(var.common_tags, {
     Name  = "Web Server SecurityGroup"
-    Owner = "Semen Martynov"
-  }
+  })
 }
 
 # -------------------------------------------------------------------
@@ -70,7 +69,7 @@ data "aws_ami" "latest_amazon_linux" {
 resource "aws_launch_configuration" "web" {
   name_prefix     = "WebServer-LC-"
   image_id        = data.aws_ami.latest_amazon_linux.id
-  instance_type   = "t3.micro" # 2vCPU, 1G
+  instance_type   = var.instance_type
   security_groups = [aws_security_group.webserver.id]
   user_data = templatefile("userdata.sh.tpl", {
     this_month = "February",
@@ -134,7 +133,7 @@ resource "aws_autoscaling_group" "web" {
 # -------------------------------------------------------------------
 
 resource "aws_elb" "web" {
-  name               = "WebServer-ELB"
+  name               = "${var.common_tags["Environment"]} WebServer-ELB"
   availability_zones = [data.aws_availability_zones.available.names[0], data.aws_availability_zones.available.names[1]]
   security_groups    = [aws_security_group.webserver.id]
   listener {
@@ -150,10 +149,9 @@ resource "aws_elb" "web" {
     target              = "http:80/"
     interval            = 10
   }
-  tags = {
+  tags = merge(var.common_tags, {
     Name  = "WebServer LB"
-    Owner = "Semen Martynov"
-  }
+  })
 }
 
 /*
