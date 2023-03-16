@@ -66,7 +66,7 @@ resource "aws_security_group" "ssh_connect_sg" {
 }
 
 # ------------------------------------------------------------------------------
-# - Web Server Instance with Docker and basic auth                             -
+# - Web Server Instance with Docker                                            -
 # ------------------------------------------------------------------------------
 
 data "aws_ami" "latest_amazon_linux" {
@@ -144,6 +144,8 @@ resource "aws_instance" "webserver" {
 
 
 # ------------------------------------------------------------------------------
+# - Application load balancer                                                  -
+# ------------------------------------------------------------------------------
 
 data "aws_availability_zones" "available" {}
 
@@ -215,34 +217,5 @@ module "load-balancer" {
     }
   ]
 
-  lambda_function_association {
-    event_type   = "viewer-request"
-    lambda_arn   = module.basic_auth.lambda_arn
-    include_body = false
-  }
 }
 
-
-
-module "basic_auth" {
-  source = "github.com/builtinnya/aws-lambda-edge-basic-auth-terraform/module"
-
-  basic_auth_credentials = {
-    user     = "username"
-    password = "password"
-  }
-
-  # All Lambda@Edge functions must be put on us-east-1.
-  # If the parent module provider region is not us-east-1, you have to
-  # define and pass us-east-1 provider explicitly.
-  # See https://www.terraform.io/docs/modules/usage.html#passing-providers-explicitly for detail.
-  #
-  providers = {
-    aws.region = aws.use1
-  }
-}
-
-provider "aws" {
-  alias  = "use1"
-  region = "us-east-1"
-}
