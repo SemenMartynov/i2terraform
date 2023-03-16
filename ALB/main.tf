@@ -113,6 +113,11 @@ resource "aws_instance" "webserver" {
   }
 
   provisioner "file" {
+    source      = "files/index.php"
+    destination = "/tmp/index.php"
+  }
+
+  provisioner "file" {
     source      = "scripts/init.sh"
     destination = "/tmp/init.sh"
   }
@@ -127,7 +132,7 @@ resource "aws_instance" "webserver" {
   connection {
     type        = "ssh"
     user        = "ec2-user"
-    private_key = file("keys/secret.pem")
+    private_key = file("keys/temp.pem")
     host        = self.public_ip
   }
 
